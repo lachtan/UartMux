@@ -29,6 +29,10 @@ module uart_mux_top
 	
 	localparam DATA_BITS = 8;
 	localparam COUNTER_BITS = 16;
+	localparam UART_COUNT = 4;
+	
+	localparam [15:0] USB_DIVISOR = 66000000 / 921600;
+	localparam [15:0] UART_DIVISOR = 66000000 / 115200;
 
 	wire clk;
 	wire reset;
@@ -57,7 +61,7 @@ module uart_mux_top
 	(
 		.clk(clk),
 		.reset(reset),		
-		.baud_divisor(66000000 / 921600),
+		.baud_divisor(USB_DIVISOR),
 		.tx(USB_RS232_TXD),
 		.rx(USB_RS232_RXD),
 		.rts(),
@@ -71,8 +75,8 @@ module uart_mux_top
 	
 	wire uart0_tx_full;
 	wire uart0_rx_empty;
-	wire uart0_tx_data;
-	wire uart0_rx_data;
+	wire [DATA_BITS-1:0] uart0_tx_data;
+	wire [DATA_BITS-1:0] uart0_rx_data;
 	wire uart0_read;
 	wire uart0_write;
 
@@ -85,7 +89,7 @@ module uart_mux_top
 	(
 		.clk(clk),
 		.reset(reset),		
-		.baud_divisor(66000000 / 115200),
+		.baud_divisor(UART_DIVISOR),
 		.tx(UART0_TX),
 		.rx(UART0_RX),
 		.rts(UART0_RTS),
@@ -99,8 +103,8 @@ module uart_mux_top
 
 	wire uart1_tx_full;
 	wire uart1_rx_empty;
-	wire uart1_tx_data;
-	wire uart1_rx_data;
+	wire [DATA_BITS-1:0] uart1_tx_data;
+	wire [DATA_BITS-1:0] uart1_rx_data;
 	wire uart1_read;
 	wire uart1_write;
 
@@ -113,7 +117,7 @@ module uart_mux_top
 	(
 		.clk(clk),
 		.reset(reset),		
-		.baud_divisor(66000000 / 115200),
+		.baud_divisor(UART_DIVISOR),
 		.tx(UART1_TX),
 		.rx(UART1_RX),
 		.rts(UART1_RTS),
@@ -127,8 +131,8 @@ module uart_mux_top
 	
 	wire uart2_tx_full;
 	wire uart2_rx_empty;
-	wire uart2_tx_data;
-	wire uart2_rx_data;
+	wire [DATA_BITS-1:0] uart2_tx_data;
+	wire [DATA_BITS-1:0] uart2_rx_data;
 	wire uart2_read;
 	wire uart2_write;
 
@@ -141,7 +145,7 @@ module uart_mux_top
 	(
 		.clk(clk),
 		.reset(reset),		
-		.baud_divisor(66000000 / 115200),
+		.baud_divisor(UART_DIVISOR),
 		.tx(UART2_TX),
 		.rx(UART2_RX),
 		.rts(UART2_RTS),
@@ -155,8 +159,8 @@ module uart_mux_top
 
 	wire uart3_tx_full;
 	wire uart3_rx_empty;
-	wire uart3_tx_data;
-	wire uart3_rx_data;
+	wire [DATA_BITS-1:0] uart3_tx_data;
+	wire [DATA_BITS-1:0] uart3_rx_data;
 	wire uart3_read;
 	wire uart3_write;
 
@@ -169,7 +173,7 @@ module uart_mux_top
 	(
 		.clk(clk),
 		.reset(reset),		
-		.baud_divisor(66000000 / 115200),
+		.baud_divisor(UART_DIVISOR),
 		.tx(UART3_TX),
 		.rx(UART3_RX),
 		.rts(UART3_RTS),
@@ -185,34 +189,39 @@ module uart_mux_top
 	#(
 		.DATA_BITS(DATA_BITS),
 		.COUNTER_BITS(COUNTER_BITS),
-		.UART_COUNT(4)
+		.UART_COUNT(UART_COUNT)
 	)
 	uart_in_mux_inst
 	(
 		.clk(clk),
 		.reset(reset),		
-		.out_fifo_full(uart_usb_tx_full),
-		.out_fifo_write(uart_usb_write),
-		.out_fifo_data(uart_usb_tx_data),
+		.fifo_full(uart_usb_tx_full),
+		.fifo_write(uart_usb_write),
+		.fifo_data(uart_usb_tx_data),
 		
-		.rx({UART3_RX, UART2_RX, UART1_RX, UART0_RX}),
 		.read({uart3_read, uart2_read, uart1_read, uart0_read}),
 		.empty({uart3_rx_empty, uart2_rx_empty, uart1_rx_empty, uart0_rx_empty}),
-		.data(uart0_rx_data)
-		//.data0(uart1_rx_data),
-		//.data0(uart2_rx_data),
-		//.data0(uart3_rx_data)
+		.data({uart3_rx_data, uart2_rx_data, uart1_rx_data, uart0_rx_data})
 	);
-
-	/*
-	uart_switch uart_switch_inst
+	
+	uart_out_mux
+	#(
+		.DATA_BITS(DATA_BITS),
+		.COUNTER_BITS(COUNTER_BITS),
+		.UART_COUNT(UART_COUNT)
+	)
+	uart_out_mux_inst
 	(
 		.clk(clk),
-		.reset(reset),
-		.usb_rx(USB_RS232_RXD),
-		.usb_tx(USB_RS232_TXD)
+		.reset(reset),		
+		.fifo_empty(uart_usb_rx_empty),
+		.fifo_read(uart_usb_read),
+		.fifo_data(uart_usb_rx_data),
+
+		.write({uart3_write, uart2_write, uart1_write, uart0_write}),
+		.full({uart3_tx_full, uart2_tx_full, uart1_tx_full, uart0_tx_full}),
+		.data({uart3_tx_data, uart2_tx_data, uart1_tx_data, uart0_tx_data})
 	);
-	*/
 	
 	led_snake led_snake_inst
 	(
