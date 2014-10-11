@@ -185,6 +185,13 @@ module uart_mux_top
 		.write(uart3_write)
 	);
 
+	/*
+	assign uart_usb_tx_data = uart_usb_rx_data;
+	wire send = ~uart_usb_rx_empty & ~uart_usb_tx_full;
+	assign uart_usb_write = send;
+	assign uart_usb_read = send;
+	*/
+
 	uart_in_mux
 	#(
 		.DATA_BITS(DATA_BITS),
@@ -203,7 +210,7 @@ module uart_mux_top
 		.empty({uart3_rx_empty, uart2_rx_empty, uart1_rx_empty, uart0_rx_empty}),
 		.data({uart3_rx_data, uart2_rx_data, uart1_rx_data, uart0_rx_data})
 	);
-	
+		
 	uart_out_mux
 	#(
 		.DATA_BITS(DATA_BITS),
@@ -219,7 +226,6 @@ module uart_mux_top
 		.fifo_data(uart_usb_rx_data),
 
 		.write({uart3_write, uart2_write, uart1_write, uart0_write}),
-		.full({uart3_tx_full, uart2_tx_full, uart1_tx_full, uart0_tx_full}),
 		.data({uart3_tx_data, uart2_tx_data, uart1_tx_data, uart0_tx_data})
 	);
 	

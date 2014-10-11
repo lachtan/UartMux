@@ -106,6 +106,7 @@ module uart_tx
 				if (clk_counter_current == baud_divisor) begin
 					state_next = IDLE_STATE;
 					tx_done_tick = 1'b1;
+					rts_next = 0;
 				end
 				else begin
 					clk_counter_next = clk_counter_current + 1;					
