@@ -19,12 +19,10 @@ module uart_out_mux
 		output wire [UART_COUNT * DATA_BITS - 1 : 0] data
 	);
 			
-	localparam [2:0]
-		S1_STATE = 3'd0,
-		S2_STATE = 3'd1,
-		S3_STATE = 3'd2,
-		S4_STATE = 3'd3,
-		S5_STATE = 3'd4;
+	localparam [1:0]
+		READ_INDEX_STATE = 2'd0,
+		READ_VALUE_STATE = 2'd1,
+		SEND_VALUE_STATE = 2'd2;
 
 	reg [1:0] state_current, state_next;
 	reg [7:0] uart_index_current, uart_index_next;
@@ -34,7 +32,7 @@ module uart_out_mux
 
 	always @(posedge clk) begin
 		if (reset) begin
-			state_current <= S1_STATE;
+			state_current <= READ_INDEX_STATE;
 			uart_index_current <= 0;
 			fifo_read_current <= 0;
 			write_current <= 0;
@@ -57,36 +55,28 @@ module uart_out_mux
 		data_next = data_current;
 
 		case (state_current)
-			S1_STATE: begin
+		
+			READ_INDEX_STATE: begin
 				if (~fifo_empty) begin
-					state_next = S2_STATE;
+					state_next = READ_VALUE_STATE;
 					fifo_read_next = 1'b1;
 					uart_index_next = fifo_data;
 				end
 			end
 
-			S2_STATE: begin
-				state_next = S3_STATE;
-			end
-			
-			S3_STATE: begin
-				if (~fifo_empty) begin
-					state_next = S4_STATE;
+			READ_VALUE_STATE: begin
+				if (~fifo_read_current & ~fifo_empty) begin
+					state_next = SEND_VALUE_STATE;
 					fifo_read_next = 1'b1;
-					data_next = 0;
 					data_next[uart_index_current * DATA_BITS +: DATA_BITS] = fifo_data;
 				end
 			end
 			
-			S4_STATE: begin
-				state_next = S1_STATE;
+			SEND_VALUE_STATE: begin
+				state_next = READ_INDEX_STATE;
 				if (uart_index_current < UART_COUNT) begin
 					write_next[uart_index_current] = 1'b1;
 				end
-			end
-
-			S5_STATE: begin
-				state_next = S1_STATE;
 			end
 
 		endcase
